@@ -2,12 +2,15 @@ package edu.eci.arsw.highlandersim;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Immortal extends Thread {
 
     private ImmortalUpdateReportCallback updateCallback=null;
-    
-    private int health;
+
+    //Se cambia el int por un AtomicInteger para que este tenga un orden de acuerdo a como
+    //va a ser modificado. No se deja usar mientras alguien más lo esté usando
+    private AtomicInteger health;
     
     private int defaultDamageValue;
 
@@ -15,10 +18,11 @@ public class Immortal extends Thread {
 
     private final String name;
 
+    private boolean paused;
     private final Random r = new Random(System.currentTimeMillis());
 
 
-    public Immortal(String name, List<Immortal> immortalsPopulation, int health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
+    public Immortal(String name, List<Immortal> immortalsPopulation, AtomicInteger health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
         super(name);
         this.updateCallback=ucb;
         this.name = name;
@@ -36,6 +40,7 @@ public class Immortal extends Thread {
 
             int nextFighterIndex = r.nextInt(immortalsPopulation.size());
 
+
             //avoid self-fight
             if (nextFighterIndex == myIndex) {
                 nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
@@ -46,7 +51,7 @@ public class Immortal extends Thread {
             this.fight(im);
 
             try {
-                Thread.sleep(1);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -57,9 +62,9 @@ public class Immortal extends Thread {
 
     public void fight(Immortal i2) {
 
-        if (i2.getHealth() > 0) {
-            i2.changeHealth(i2.getHealth() - defaultDamageValue);
-            this.health += defaultDamageValue;
+        if (i2.getHealth().get() > 0) {
+            i2.changeHealth(i2.getHealth().get() - defaultDamageValue);
+            this.health.getAndAdd(defaultDamageValue);
             updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
         } else {
             updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
@@ -67,11 +72,14 @@ public class Immortal extends Thread {
 
     }
 
-    public void changeHealth(int v) {
-        health = v;
+    public void pause(boolean bool){
+        this.paused = bool;
     }
 
-    public int getHealth() {
+    public void changeHealth(int v) {
+        health.getAndSet(v);}
+
+    public AtomicInteger getHealth() {
         return health;
     }
 

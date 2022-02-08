@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.Color;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JScrollBar;
 
 public class ControlFrame extends JFrame {
@@ -91,13 +92,21 @@ public class ControlFrame extends JFrame {
                 /*
 				 * COMPLETAR
                  */
-                int sum = 0;
-                for (Immortal im : immortals) {
-                    sum += im.getHealth();
+                synchronized (immortals){
+                    try {
+                        immortals.wait();
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                    int sum = 0;
+                    for (Immortal im : immortals) {
+                        sum += im.getHealth().get();
+                    }
+                    statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
                 }
 
-                statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
-                
+
+
                 
 
             }
@@ -152,7 +161,8 @@ public class ControlFrame extends JFrame {
             List<Immortal> il = new LinkedList<Immortal>();
 
             for (int i = 0; i < ni; i++) {
-                Immortal i1 = new Immortal("im" + i, il, DEFAULT_IMMORTAL_HEALTH, DEFAULT_DAMAGE_VALUE,ucb);
+                //Se crea una nueva variable AtomicInteger de acuerdo al valor de la vida de un inmortal
+                Immortal i1 = new Immortal("im" + i, il, new AtomicInteger(DEFAULT_IMMORTAL_HEALTH), DEFAULT_DAMAGE_VALUE,ucb);
                 il.add(i1);
             }
             return il;
