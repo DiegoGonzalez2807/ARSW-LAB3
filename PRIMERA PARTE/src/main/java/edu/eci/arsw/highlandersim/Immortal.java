@@ -35,6 +35,16 @@ public class Immortal extends Thread {
 
         while (true) {
             Immortal im;
+            synchronized(immortalsPopulation){
+                try{
+                    if(paused){
+                        immortalsPopulation.wait();
+                    }
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+
 
             int myIndex = immortalsPopulation.indexOf(this);
 
@@ -81,6 +91,14 @@ public class Immortal extends Thread {
 
     public AtomicInteger getHealth() {
         return health;
+    }
+    
+    public void pause(){
+        this.paused = true;
+    }
+    
+    public void resumed(){
+        this.paused = false;
     }
 
     @Override
