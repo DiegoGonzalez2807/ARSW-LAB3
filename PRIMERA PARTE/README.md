@@ -85,23 +85,81 @@ Sincronización y Dead-Locks.
 	* Cada jugador, permanentemente, ataca a algún otro inmortal. El que primero ataca le resta M puntos de vida a su contrincante, y aumenta en esta misma cantidad sus propios puntos de vida.
 	* El juego podría nunca tener un único ganador. Lo más probable es que al final sólo queden dos, peleando indefinidamente quitando y sumando puntos de vida.
 
-2. Revise el código e identifique cómo se implemento la funcionalidad antes indicada. Dada la intención del juego, un invariante debería ser que la sumatoria de los puntos de vida de todos los jugadores siempre sea el mismo(claro está, en un instante de tiempo en el que no esté en proceso una operación de incremento/reducción de tiempo). Para este caso, para N jugadores, cual debería ser este valor?.
+### 2. Revise el código e identifique cómo se implemento la funcionalidad antes indicada. Dada la intención del juego, un invariante debería ser que la sumatoria de los puntos de vida de todos los jugadores siempre sea el mismo(claro está, en un instante de tiempo en el que no esté en proceso una operación de incremento/reducción de tiempo). Para este caso, para N jugadores, cual debería ser este valor?.
 
-3. Ejecute la aplicación y verifique cómo funcionan las opción ‘pause and check’. Se cumple el invariante?.
+Se tiene una instrucción de creación de inmortales, donde se le pide al usuario que me de la cantidad de luchadores que quiere. Estos se guardan en una lista. En el constructor del ControlFrame, se revisa que en caso que en la lucha no haya ningún inmortal, se pida una lista con nuevos luchadores y estos comiencen a pelear.
 
-4. Una primera hipótesis para que se presente la condición de carrera para dicha función (pause and check), es que el programa consulta la lista cuyos valores va a imprimir, a la vez que otros hilos modifican sus valores. Para corregir esto, haga lo que sea necesario para que efectivamente, antes de imprimir los resultados actuales, se pausen todos los demás hilos. Adicionalmente, implemente la opción ‘resume’.
+En cuestión del código de la clase Immortal.java se revisa que un luchador no pueda pelear consigo mismo a partir de una declaración IF. Se le da a cada luchador la lista de luchadores para que escoja uno para pelear. Sobre la inmortalidad de los luchadores, esta se basa en la función FIGHT, en la cuál se le dice al luchador que si la vida de su contrincante aún no es cero entonces al contrincante se le baja la vida y se le suma a nuestro luchador esa cantidad.
 
-5. Verifique nuevamente el funcionamiento (haga clic muchas veces en el botón). Se cumple o no el invariante?.
+La ecuación que define la totalidad de puntos de vida que debe aparecer es N*100
 
-6. Identifique posibles regiones críticas en lo que respecta a la pelea de los inmortales. Implemente una estrategia de bloqueo que evite las condiciones de carrera. Recuerde que si usted requiere usar dos o más ‘locks’ simultáneamente, puede usar bloques sincronizados anidados:
+### 3. Ejecute la aplicación y verifique cómo funcionan las opción ‘pause and check’. Se cumple el invariante?.
 
-	```java
+El invariante no se cumple debido a que la sumatoria de la vida de los jugadores debería ser 100*N (un ejemplo es que con 3 luchadores la sumatoria debería ser 300) pero se ve en la ejecución del programa que no se cumple
+
+### 4. Una primera hipótesis para que se presente la condición de carrera para dicha función (pause and check), es que el programa consulta la lista cuyos valores va a imprimir, a la vez que otros hilos modifican sus valores. Para corregir esto, haga lo que sea necesario para que efectivamente, antes de imprimir los resultados actuales, se pausen todos los demás hilos. Adicionalmente, implemente la opción ‘resume’.
+
+#### Implementación de opción Pause and Check
+```java
+	synchronized(immortals){
+                    for(Immortal immortal:immortals ){
+                        immortal.pause();
+                    }
+                    AtomicInteger sum = new AtomicInteger(0);
+                    for (Immortal im : immortals) {
+                        synchronized(im.getHealth()){
+                            sum.addAndGet(im.getHealth().get());
+                        }
+                    }   
+                    statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
+                }
+```
+##### Código en Immortal
+```java
+	 synchronized(immortalsPopulation){
+                try{
+                    if(paused){
+                        immortalsPopulation.wait();
+                    }
+```
+####Implementación botón RESUMEN
+```java
+	btnResume.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                /**
+                 * IMPLEMENTAR
+                 */
+                synchronized(immortals){
+                    for(Immortal immortal:immortals){
+                        immortal.resumed();
+                    }
+                    immortals.notifyAll();
+                }
+
+            }
+        });
+```
+
+##### Código en Immortal
+```java
+	public void resumed(){
+        this.paused = false;
+    }
+```
+
+	
+### 5. Verifique nuevamente el funcionamiento (haga clic muchas veces en el botón). Se cumple o no el invariante?.
+Se cunmple el invariante
+
+### 6. Identifique posibles regiones críticas en lo que respecta a la pelea de los inmortales. Implemente una estrategia de bloqueo que evite las condiciones de carrera. Recuerde que si usted requiere usar dos o más ‘locks’ simultáneamente, puede usar bloques sincronizados anidados:
+
+```java
 	synchronized(locka){
 		synchronized(lockb){
 			…
 		}
 	}
-	```
+```
 
 7. Tras implementar su estrategia, ponga a correr su programa, y ponga atención a si éste se llega a detener. Si es así, use los programas jps y jstack para identificar por qué el programa se detuvo.
 
