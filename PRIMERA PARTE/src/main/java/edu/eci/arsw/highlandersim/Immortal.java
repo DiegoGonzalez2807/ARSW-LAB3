@@ -35,17 +35,17 @@ public class Immortal extends Thread {
 
         while (true) {
             Immortal im;
-            //Mientras que la bandera de pausado sea true, dejamos esperando el hilo
-            //Para este caso se sincroniza con la misma función para que 
-            while(this.paused){
-                synchronized (this){
-                    try {
-                        this.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            synchronized(immortalsPopulation){
+                try{
+                    if(paused){
+                        immortalsPopulation.wait();
                     }
+                }catch(InterruptedException e){
+                    e.printStackTrace();
                 }
             }
+
+
             int myIndex = immortalsPopulation.indexOf(this);
 
             int nextFighterIndex = r.nextInt(immortalsPopulation.size());
@@ -91,6 +91,14 @@ public class Immortal extends Thread {
 
     public AtomicInteger getHealth() {
         return health;
+    }
+    
+    public void pause(){
+        this.paused = true;
+    }
+    
+    public void resumed(){
+        this.paused = false;
     }
 
     @Override
