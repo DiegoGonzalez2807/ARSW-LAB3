@@ -104,16 +104,16 @@ public class ControlFrame extends JFrame {
                     }
                     statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
                 }*/
-                synchronized(immortals){
+                //synchronized(immortals){
                     for(Immortal immortal:immortals ){
                         immortal.pause();
                     }
-                    int sum = 0;
+                    AtomicInteger sum = new AtomicInteger(0);
                     for (Immortal im : immortals) {
-                        sum += im.getHealth().get();
+                        sum.addAndGet(im.getHealth().get());
                     }
                     statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
-                }
+                //}
 
 
 
