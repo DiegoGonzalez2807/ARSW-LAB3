@@ -9,9 +9,60 @@
 
 Control de hilos con wait/notify. Productor/consumidor.
 
-1. Revise el funcionamiento del programa y ejecútelo. Mientras esto ocurren, ejecute jVisualVM y revise el consumo de CPU del proceso correspondiente. A qué se debe este consumo?, cual es la clase responsable?
-2. Haga los ajustes necesarios para que la solución use más eficientemente la CPU, teniendo en cuenta que -por ahora- la producción es lenta y el consumo es rápido. Verifique con JVisualVM que el consumo de CPU se reduzca.
-3. Haga que ahora el productor produzca muy rápido, y el consumidor consuma lento. Teniendo en cuenta que el productor conoce un límite de Stock (cuantos elementos debería tener, a lo sumo en la cola), haga que dicho límite se respete. Revise el API de la colección usada como cola para ver cómo garantizar que dicho límite no se supere. Verifique que, al poner un límite pequeño para el 'stock', no haya consumo alto de CPU ni errores.
+### 1. Revise el funcionamiento del programa y ejecútelo. Mientras esto ocurren, ejecute jVisualVM y revise el consumo de CPU del proceso correspondiente. A qué se debe este consumo?, cual es la clase responsable?
+
+#### Consumo de CPU antes de la ejecución del programa
+![img1](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen1.png)
+
+#### Consumo de CPU durante la ejecución del programa 
+![img2](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen2.png)
+
+Esta es la gráfica que se obtiene mientras se corre el programa. La primera parte sube exponencialmente debido a que el productor crea 5 objetos de una vez para que el consumidor se lo pueda comer. Apenas el productor inserta en la lista queue el objeto producido, el consumidor saca el objeto que se encuentre en la cola de la lista para consumirlo. Por lo que tenemos una estabilidad en memoria. Respecto a la CPU, este tiene un consumo demasiado alto debido a que el productor debe suplir la necesidad del consumidor. Mientras que el productor crea objetos y descansa 1 segundo, el consumidor no tiene un descanso.
+
+Cabe aclarar que el consumo de CPU durante la ejecución del programa oscila entre el 35% y el 40% de CPU.
+
+![img3](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen3.png)
+
+
+### 2. Haga los ajustes necesarios para que la solución use más eficientemente la CPU, teniendo en cuenta que -por ahora- la producción es lenta y el consumo es rápido. Verifique con JVisualVM que el consumo de CPU se reduzca.
+
+#### Solucion del problema de consumo de CPU
+Para el arreglo de este problema de CPU lo que se hace es que el consumidor va a descansar la misma cantidad de tiempo que descansa el productor para crear nuevos objetos.
+
+![img4](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen4.png)
+
+Con este cambio se nota que el consumo de CPU fue reducido casi en su totalidad, esto debido a que el productor puede suplir la necesidad del consumidor y de paso el proceso que hace el consumidor se para por un segundo cada vez que pasa.
+
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen5.png)
+
+
+### 3. Haga que ahora el productor produzca muy rápido, y el consumidor consuma lento. Teniendo en cuenta que el productor conoce un límite de Stock (cuantos elementos debería tener, a lo sumo en la cola), haga que dicho límite se respete. Revise el API de la colección usada como cola para ver cómo garantizar que dicho límite no se supere. Verifique que, al poner un límite pequeño para el 'stock', no haya consumo alto de CPU ni errores.
+
+El consumidor va a comer cada 10 milisegundos y el productor va a seguir con el mismo tiempo de espera para producir (1 segundo)
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen6.png)
+
+#### Consumo de CPU
+Como se puede observar, la ejecución del programa alcanza a tener un máximo de 9.3% en consumo de CPU cuando no se tiene un límite en la lista.
+
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen7.png)
+
+Lo que nos dice la API de linkedBlockingQueue es que esta es una lista con un máximo ya definido (Integer.MAX_VALUE), sin embargo, hay 3 constructores de esta lista con los cuales le podemos dar un valor definido. Como el productor está creando objetos tan rápido, se dejará un máximo de lista de 3.000 y un mensaje donde se pueda apreciar que si llegamos a esa longitud de cola.
+
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen8.png)
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen10.png)
+
+Efectivamente, se genera un error cuando la longitud de la cola es de 3000
+También toca definir en el productor cual es el máximo de stock que se puede ingresar a la cola. En este caso debe ser el mismo valor que el máximo de la lista
+
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen11.png)
+
+Se modifica el código del productor, diciendo que en caso de que la longitud de la cola no exceda el máximo definido, siga produciendo objetos, y en caso de que ya llegue al límite, entonces sincronice los hilos para poder parar la inserción de datos en la cola y no generar el error antes mencionado. Esto sirve también para que solo los hilos que estaban produciendo se detengan mientras que los que están consumiendo el objeto sigan
+
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen13.png)
+
+#### Consumo de CPU después del cambio
+El consumo de CPU del programa se reduce de manera significativa de un máximo de 9.3% a un máximo de 3.6%
+![img5](https://github.com/DiegoGonzalez2807/ARSW-LAB3/blob/master/PRIMERA%20PARTE/Images/Imagen9.png)
 
 
 ##### Parte II. – Antes de terminar la clase.
