@@ -92,18 +92,12 @@ public class ControlFrame extends JFrame {
                 /*
 				 * COMPLETAR
                  */
-                synchronized (immortals){
-                    try {
-                        immortals.wait();
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
+
                     int sum = 0;
                     for (Immortal im : immortals) {
                         sum += im.getHealth().get();
                     }
                     statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
-                }
 
 
 
